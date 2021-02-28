@@ -20,15 +20,17 @@ fun introScreen(): String{
 fun getInput(command: String): String{
     print("$command: ")
     val scanner = Scanner(System.`in`)
-    return scanner.nextLine()
+    return scanner.nextLine().trim()
 }
 
 fun convertToBaseTen(): String {
     println("\nCONVERTING TO BASE 10")
     val number = getInput("Enter number")
     val base = getInput("Enter the base of the number").toInt()
-    val disunited = splitNumbers(number)
 
+    if(number.contains('.')) return decimalBaseTenConversion(number, base)
+
+    val disunited = splitNumbers((number))
     return "\n$number in base $base converted to base 10 = ${calculateConversionToBaseTen(disunited, base)}"
 }
 
@@ -45,7 +47,6 @@ fun convertFromOneBaseToAnother(): String {
     val number = getInput("Enter the number")
     val firstBase = getInput("Enter the base of the number").toInt()
     val secondBase = getInput("Enter the base number you want to convert to").toInt()
-
     /*
         This function is basically the combination of convertToBaseTen() and convertBaseTenToOtherBases()
 
@@ -107,6 +108,7 @@ fun calculateConversionFromBaseTen(number: Int, base: Int): String{
          *
          * Illustration 1:
          *   We have         :-  986 - (123 * 8)
+         *
          *   Instead of      :-  984 - 986 = -2
          *   What happens is :-  984 - 986 = 2      Therefore we always get a positive integer
          */
@@ -126,7 +128,6 @@ fun calculateConversionFromBaseTen(number: Int, base: Int): String{
 fun isFound(numbers: String) = 'T' in numbers || 'E' in numbers
 
 fun splitNumbers(numbers: String): MutableList<Int>{
-    var increment = 0
     val listOfNumbers = mutableListOf<Int>()
     /*
         This function splits all digits in the variable(numbers) and appends each to the mutableList(listOfNumbers)
@@ -136,19 +137,99 @@ fun splitNumbers(numbers: String): MutableList<Int>{
         Illustration 2:
               numbers = "12EET" ends up as a mutableList of [1, 2, 11, 11, 10]
      */
-    while(increment < numbers.length){
-        when {
-            numbers[increment] == 'E' -> listOfNumbers.add(11)
-            numbers[increment] == 'T' -> listOfNumbers.add(10)
-            else -> listOfNumbers.add(Integer.parseInt(numbers[increment].toString()))
+
+    for(value in numbers){
+        when (value) {
+            'E' -> listOfNumbers.add(11)
+            'T' -> listOfNumbers.add(10)
+            else -> listOfNumbers.add(Integer.parseInt(value.toString()))
         }
-        ++increment
     }
+
     return listOfNumbers
 }
 
+fun decimalBaseTenConversion(numbers: String, base : Int): String{
+    //When converting decimal numbers in number bases, the process is a little different. Thus why i created a special
+    // function `decimalBaseTenConversion()` for that very purpose
+
+    //Example: Convert 110.101 in base 2 to base 10 = 6.625
+
+    //Note: I wrote code in the `convertToBaseTen()` function to differentiate decimal digits from normal integers
+    //If it's a decimal digit, the `convertToBaseTen()` function calls this function `decimalBaseTenConversion()` and
+    // it takes the user number and the base of the number as arguments
+
+    /*
+    Let's say the user enters 110.101 in base 2 and is converting to base 10
+
+    The user number is then split in a mutableListOf<String> in the `newList variable`
+
+    Illustration 1:
+        110.101 ->  [1, 1, 0, ., 1, 0, 1]
+    */
+    val newList = mutableListOf<String>()
+    for(values in numbers) newList.add(values.toString())
+
+    var result = 0.0
+
+    /*
+      We needed to loop through the mutableListOf<String> in the `newList variable` and perform some basic calculations
+      but we have one problem. Thus the dot(`.`). We cannot convert the dot into a integer so i had no choice than to use
+      a try and catch block
+
+      Anyways here's how it works
+
+      Illustration 2:
+            user number = 110.101       base = 2
+            result = [(1 * 2 ^ 2) + (1 * 2 ^ 1) + (0 * 2 ^ 0)] + [(1 * 2 ^ -1) + (0 * 2 ^ -2) + (1 * 2 ^ -3)]
+
+            **Now let's note a few things
+      Illustration 3:
+            First 101 the numbers before the dot are calculated which evaluate to 6
+            Thus:
+                (1 * 2 ^ 2) + (1 * 2 ^ 1) + (0 * 2 ^ 0)
+                   4        +     2       +      0     = 6
+
+                result = 6
+
+            When the for loop gets to the dot(`.`), it throws an NumberFormatException because the dot cannot be converted into an integer
+            But thus a good thing because it makes things easier(believe it or not). :)
+            The numbers after the dot are calculated in a slightly different way
+
+            The code in the catch block is run due to the `NumberFormatException` and here's what happens
+
+              (1 * 2 ^ -1) + (0 * 2 ^ -2) + (1 * 2 ^ -3)
+                   0.5     + 0 (infinity) +  0.125    = 0.625(infinity)
+
+               You can see that this powers start from -1 and continue in a descending order
+               When you run this code you'll get `infinity` as an answer but we don't want that so i replaced infinity with 0
+
+              result += 0.625
+              result = 6.625
+     */
+
+    try {
+        var newIndex = newList.indexOf(".") - 1
+
+        for(value in newList){
+            result += (value.toInt() * (base.toDouble().pow((newIndex).toDouble())))
+            --newIndex
+        }
+    }catch (error: NumberFormatException){
+        val increase = newList.indexOf(".") + 1
+        var size = - 1
+
+        for(increment in increase until newList.size){
+            val decimal = (newList[increment].toDouble() * base).pow(size)
+            result += if(decimal == Double.POSITIVE_INFINITY) 0.0 else decimal     //This ensures our answer is not `infinity`
+            --size
+        }
+    }
+
+    return "\n$numbers in base $base converted to base 10 = $result"
+}
+
 fun calculateConversionToBaseTen(listOfNumbers: MutableList<Int>, base: Int) : Int{
-    var increment = 0
     var sum = 0.0
     var size = listOfNumbers.size
     /*
@@ -162,10 +243,9 @@ fun calculateConversionToBaseTen(listOfNumbers: MutableList<Int>, base: Int) : I
             result =     20736    +      3456     +      1584      +        120     +       4
             result = 25900
      */
-    while(increment < listOfNumbers.size){
-       sum += (listOfNumbers[increment] * (base.toDouble().pow((--size).toDouble())))
-        ++increment
-    }
+
+    for(values in listOfNumbers) sum += (values * (base.toDouble().pow((--size).toDouble())))
+
     return sum.toInt()
 }
 
