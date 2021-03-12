@@ -30,7 +30,7 @@ fun convertToBaseTen(): String {
 
     if(number.contains('.')) return decimalBaseTenConversion(number, base)
 
-    val disunited = splitNumbers((number))
+    val disunited = splitNumbers(number)
     return "\n$number in base $base converted to base 10 = ${calculateConversionToBaseTen(disunited, base)}"
 }
 
