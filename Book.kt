@@ -1,5 +1,6 @@
 import java.util.Scanner
-import java.util.*
+import java.util.InputMismatchException
+
 
 var scanner = Scanner(System.`in`)
 
