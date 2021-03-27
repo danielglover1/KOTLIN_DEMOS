@@ -1,5 +1,3 @@
-// Just to inform you, this program doesn't handle errors(ALL INVALID INPUTS) yet
-
 import java.util.Scanner
 import kotlin.math.max
 import kotlin.math.min
@@ -26,18 +24,42 @@ fun getInput(command: String): String{
 fun convertToBaseTen(): String {
     println("\nCONVERTING TO BASE 10")
     val number = getInput("Enter number")
-    val base = getInput("Enter the base of the number").toInt()
+    val base : Int
 
-    if(number.contains('.')) return decimalBaseTenConversion(number, base)
+    try{
+        base = getInput("Enter the base of the number").toInt()
+    }catch(e: NumberFormatException){
+        println("Thus not a number")
+        return ""
+    }
+
+    for(digits in number) {
+        if(digits == 'E' || digits == 'T') continue
+        else if(digits in 'A'..'Z' || digits in 'a'..'z') return "Invalid Input"
+        else if(number.contains('.')) return decimalBaseTenConversion(number, base)
+        else if (Integer.parseInt(digits.toString()) > base) return "Invalid Question.\nbase number must be greater than digits in number but less than or equal to 12"
+    }
+
+
 
     val disunited = splitNumbers(number)
+    if(disunited.isEmpty()) return  ""
+
     return "\n$number in base $base converted to base 10 = ${calculateConversionToBaseTen(disunited, base)}"
 }
 
 fun convertBaseTenToOtherBases(): String{
     println("\nCONVERTING BASE 10 TO OTHER BASES")
-    val number = getInput("Enter the number").toInt()
-    val base = getInput("Enter the base number you want to convert to").toInt()
+    val number : Int
+    val base : Int
+
+    try{
+        number = getInput("Enter the number").toInt()
+        base = getInput("Enter the base number you want to convert to").toInt()
+    }catch(e: NumberFormatException){
+        println("Thus not a number")
+        return ""
+    }
 
     return "\n$number in base 10 converted to base $base = ${calculateConversionFromBaseTen(number, base)}"
 }
@@ -45,8 +67,30 @@ fun convertBaseTenToOtherBases(): String{
 fun convertFromOneBaseToAnother(): String {
     println("\nCONVERTING FROM ONE BASE TO ANOTHER")
     val number = getInput("Enter the number")
-    val firstBase = getInput("Enter the base of the number").toInt()
-    val secondBase = getInput("Enter the base number you want to convert to").toInt()
+    val firstBase : Int
+    val secondBase : Int
+
+    try {
+        firstBase = getInput("Enter the base of the number").toInt()
+    }catch(e: NumberFormatException){
+        println("Thus not a number")
+        return ""
+    }
+
+    for(digits in number) {
+        if(digits == 'E' || digits == 'T') continue
+        else if(digits in 'A'..'Z' || digits in 'a'..'z') return "Invalid Input"
+        else if(number.contains('.')) return ""
+        else if (Integer.parseInt(digits.toString()) > firstBase) return "Invalid Question.\nbase number must be greater than digits in number but less than or equal to 12"
+    }
+
+    try{
+        secondBase = getInput("Enter the base number you want to convert to").toInt()
+    }catch(e: NumberFormatException){
+        println("Thus not a number")
+        return ""
+    }
+
     /*
         This function is basically the combination of convertToBaseTen() and convertBaseTenToOtherBases()
 
@@ -55,7 +99,9 @@ fun convertFromOneBaseToAnother(): String {
             the result return from convertToBaseTen() is given to convertBaseTenToOtherBases()
             convertBaseTenToOtherBases() finalizes everything and returns the final output result
      */
+
     val disunited = splitNumbers(number)
+    if(disunited.isEmpty()) return  ""
     val firstResult = calculateConversionToBaseTen(disunited, firstBase)
     val secondResult = calculateConversionFromBaseTen(firstResult, secondBase)
 
@@ -142,7 +188,15 @@ fun splitNumbers(numbers: String): MutableList<Int>{
         when (value) {
             'E' -> listOfNumbers.add(11)
             'T' -> listOfNumbers.add(10)
-            else -> listOfNumbers.add(Integer.parseInt(value.toString()))
+            else -> {
+                try {
+                    listOfNumbers.add(Integer.parseInt(value.toString()))
+                }catch(e: NumberFormatException){
+                    println("Thus not a number")
+                    listOfNumbers.clear()
+                    return listOfNumbers
+                }
+            }
         }
     }
 
@@ -169,6 +223,15 @@ fun decimalBaseTenConversion(numbers: String, base : Int): String{
     */
     val newList = mutableListOf<String>()
     for(values in numbers) newList.add(values.toString())
+
+    for(num in newList){
+        try {
+            Integer.parseInt(num)
+        }catch (e : NumberFormatException){
+            println("Invalid Question")
+            return ""
+        }
+    }
 
     var result = 0.0
 
